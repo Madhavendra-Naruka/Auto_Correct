@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define MAX_WORD_LENGTH 100
 #define DICTIONARY_SIZE 5000
@@ -49,28 +50,71 @@ int read_dictionary(const char *filename, char dictionary[][MAX_WORD_LENGTH]) {
     return count;
 }
 
-// Function to find the closest word(s) in the dictionary
-void find_closest_words(const char *word, char dictionary[][MAX_WORD_LENGTH], int dict_size) {
-    int min_distance = MAX_WORD_LENGTH;
-    char closest_words[DICTIONARY_SIZE][MAX_WORD_LENGTH];
-    int closest_count = 0;
+// Function to check if two words have 75% matching characters
+bool is_75_percent_match(const char *word1, const char *word2) {
+    int len1 = strlen(word1);
+    int len2 = strlen(word2);
 
-    for (int i = 0; i < dict_size; i++) {
-        int distance = levenshtein_distance(word, dictionary[i]);
-        if (distance < min_distance) {
-            min_distance = distance;
-            closest_count = 0;
-            strcpy(closest_words[closest_count++], dictionary[i]);
-        } else if (distance == min_distance) {
-            strcpy(closest_words[closest_count++], dictionary[i]);
+    int match_count = 0;
+    for (int i = 0; i < len1; i++) {
+        for (int j = 0; j < len2; j++) {
+            if (word1[i] == word2[j]) {
+                match_count++;
+                break;
+            }
         }
     }
 
-    printf("Did you mean:\n");
-    for (int i = 0; i < closest_count; i++) {
-        printf("%s\n", closest_words[i]);
+    float match_percentage = (float)match_count / len1;
+    return match_percentage >= 0.75;
+}
+
+// Function to find the closest word(s) in the dictionary
+void find_closest_words(const char *word, char dictionary[][MAX_WORD_LENGTH], int dict_size) {
+    int min_distance = MAX_WORD_LENGTH;
+    char closest_word[MAX_WORD_LENGTH]; // Only storing one word now
+    int word_len = strlen(word);
+    int found = 0;
+
+    for (int i = 0; i < dict_size; i++) {
+        int dict_word_len = strlen(dictionary[i]);
+
+        // Check if the word is an exact match
+        if (strcmp(word, dictionary[i]) == 0) {
+            printf("Correct Spelling\n", word);
+            return;
+        }
+
+        // Check if the first letter matches
+        if (dictionary[i][0] != word[0]) {
+            continue;
+        }
+
+        // Check if the dictionary word length is +1 or -1 of the input word length
+        if (!(dict_word_len == word_len + 1 ||  dict_word_len == word_len)) {
+            continue;
+        }
+
+        // Check if the words have 75% matching characters
+        if (!is_75_percent_match(word, dictionary[i])) {
+            continue;
+        }
+
+        int distance = levenshtein_distance(word, dictionary[i]);
+        if (distance < min_distance) {
+            min_distance = distance;
+            strcpy(closest_word, dictionary[i]); // Store only the closest word
+            found = 1;
+        }
+    }
+
+    if (found) {
+        printf("Auto-Correct: %s \n", closest_word);
+    } else {
+        printf("No matching word found.\n");
     }
 }
+
 
 int main() {
     char dictionary[DICTIONARY_SIZE][MAX_WORD_LENGTH];
