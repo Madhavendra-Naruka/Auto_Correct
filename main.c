@@ -91,7 +91,7 @@ void find_closest_words(const char *word, char dictionary[][MAX_WORD_LENGTH], in
         }
 
         // Check if the dictionary word length is +1 or -1 of the input word length
-        if (!(dict_word_len == word_len + 1 ||  dict_word_len == word_len)) {
+        if (!(dict_word_len == word_len - 1 || dict_word_len == word_len + 1 ||  dict_word_len == word_len)) {
             continue;
         }
 
